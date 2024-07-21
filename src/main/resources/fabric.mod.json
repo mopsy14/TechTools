@@ -1,0 +1,31 @@
+{
+	"schemaVersion": 1,
+	"id": "tech_tools",
+	"version": "${version}",
+	"name": "TechTools",
+	"description": "This is a mod that adds tools for tech mods",
+	"authors": [
+		"Mopsy"
+	],
+	"contact": {
+		"homepage": "https://github.com/mopsy14/TechTools",
+		"sources": "https://github.com/mopsy14/TechTools"
+	},
+	"license": "ARR",
+	"icon": "assets/tech_tools/tech_tools_icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"mopsy.productions.techtools.TechTools"
+		]
+	},
+	"mixins": [
+
+	],
+	"depends": {
+		"fabricloader": ">=0.15.11",
+		"minecraft": "~1.19.2",
+		"java": ">=17",
+		"fabric-api": "*"
+	}
+}
