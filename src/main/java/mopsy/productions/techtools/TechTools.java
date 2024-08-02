@@ -1,9 +1,11 @@
 package mopsy.productions.techtools;
 
+import mopsy.productions.techtools.networking.TTNetwork;
+import mopsy.productions.techtools.registry.TTBlockEntities;
 import mopsy.productions.techtools.registry.TTBlocks;
 import mopsy.productions.techtools.registry.TTItems;
+import mopsy.productions.techtools.registry.TTScreenHandlers;
 import net.fabricmc.api.ModInitializer;
-
 import net.fabricmc.fabric.api.client.itemgroup.FabricItemGroupBuilder;
 import net.minecraft.item.ItemGroup;
 import net.minecraft.item.ItemStack;
@@ -23,6 +25,9 @@ public class TechTools implements ModInitializer {
 
 		TTItems.regItems();
 		TTBlocks.regBlocks();
+		TTBlockEntities.regBlockEntities();
+		TTScreenHandlers.regHandlers();
+		TTNetwork.regC2SPackets();
 
 
 

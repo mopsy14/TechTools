@@ -17,6 +17,9 @@
 	"entrypoints": {
 		"main": [
 			"mopsy.productions.techtools.TechTools"
+		],
+		"client": [
+			"mopsy.productions.techtools.TechToolsClient"
 		]
 	},
 	"mixins": [

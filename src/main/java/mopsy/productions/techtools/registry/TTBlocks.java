@@ -1,8 +1,7 @@
 package mopsy.productions.techtools.registry;
 
-import net.minecraft.block.AbstractBlock;
+import mopsy.productions.techtools.blocks.block.ElectricityMeterBlock;
 import net.minecraft.block.Block;
-import net.minecraft.block.Material;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.util.Identifier;
@@ -13,10 +12,10 @@ import static mopsy.productions.techtools.TechTools.modid;
 
 public class TTBlocks {
     private static final Item.Settings defItem = new Item.Settings().group(CREATIVE_TAB);
-    public static BlockItemPair testBlock;
+    public static BlockItemPair electricityMeter;
 
     public static void regBlocks(){
-        testBlock = reg("test_block", new Block(AbstractBlock.Settings.of(Material.AIR)));
+        electricityMeter = reg("electricity_meter", new ElectricityMeterBlock());
     }
     private static BlockItemPair reg(String id, Block block){
         Block regBlock = Registry.register(Registry.BLOCK,new Identifier(modid,id),block);
