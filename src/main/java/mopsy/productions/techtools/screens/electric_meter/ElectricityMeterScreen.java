@@ -16,6 +16,7 @@ import static mopsy.productions.techtools.TechTools.modid;
 
 public class ElectricityMeterScreen extends HandledScreen<ElectricityMeterScreenHandler> {
     private static final Identifier TEXTURE = new Identifier(modid, "textures/gui/electricity_meter.png");
+    private long firstTime=System.nanoTime();
 
     public ElectricityMeterScreen(ElectricityMeterScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
@@ -50,7 +51,8 @@ public class ElectricityMeterScreen extends HandledScreen<ElectricityMeterScreen
         RenderSystem.setShader(GameRenderer::getPositionColorShader);
         BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
         bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
-        drawQuad(matrix4f,bufferBuilder,x+32,y+96,x+21,y+58,x+56,y+83,x+39,y+24,0.5f,0.3f,0.7f,0.3f);
+
+        drawQuad(matrix4f,bufferBuilder,x+120+(firstTime-System.nanoTime())/300000000f,y+96+(firstTime-System.nanoTime())/300000000f,x+20,y+58,x+56,y+83,x+39,y+24,0.5f,0.3f,0.7f,1f);
         //drawLine(matrix4f,bufferBuilder,x,y,x+100,y,12);
         //drawLine(matrix4f,bufferBuilder,x+300,y,x+300,y+100,12);
         //drawLine(matrix4f,bufferBuilder,x+300,y+100,x+300,y,12);
@@ -142,10 +144,52 @@ public class ElectricityMeterScreen extends HandledScreen<ElectricityMeterScreen
         System.out.println(vertex3.x+" "+vertex3.y);
         System.out.println(vertex4.x+" "+vertex4.y);
          */
+        /*
+        float dist1;
+        float dist2 = v1.min(v2).getSqMagnitude();
+        float dist3 = v1.min(v3).getSqMagnitude();
+        float dist4 = v1.min(v4).getSqMagnitude();
 
-        drawTriangle(matrix4f, bufferBuilder, v1.x,v1.y,v2.x,v2.y,v3.x,v3.y,r,g,b,a);
-        drawTriangle(matrix4f, bufferBuilder, v4.x,v4.y,v2.x,v2.y,v3.x,v3.y,r,g,b,a);
+        if(dist2>dist3&&dist2>dist4){
+            drawTriangle(matrix4f, bufferBuilder, v1.x,v1.y,v3.x,v3.y,v4.x,v4.y,r,g,b,a);
+            dist1 = v2.min(v1).getSqMagnitude();
+            dist3 = v2.min(v3).getSqMagnitude();
+            dist4 = v2.min(v4).getSqMagnitude();
+            if(dist1>dist3&&dist1>dist4){
+                drawTriangle(matrix4f, bufferBuilder, v2.x,v2.y,v3.x,v3.y,v4.x,v4.y,r,g,b,a);
+            } else if (dist3>dist1&&dist3>dist4) {
+                drawTriangle(matrix4f, bufferBuilder, v2.x,v2.y,v1.x,v1.y,v4.x,v4.y,r,g,b,a);
+            } else {
+                drawTriangle(matrix4f, bufferBuilder, v2.x,v2.y,v1.x,v1.y,v3.x,v3.y,r,g,b,a);
+            }
+        } else if (dist3>dist2&&dist3>dist4) {
+            drawTriangle(matrix4f, bufferBuilder, v1.x,v1.y,v2.x,v2.y,v4.x,v4.y,r,g,b,a);
+            dist1 = v3.min(v1).getSqMagnitude();
+            dist2 = v3.min(v2).getSqMagnitude();
+            dist4 = v3.min(v4).getSqMagnitude();
+            if(dist1>dist2&&dist1>dist4){
+                drawTriangle(matrix4f, bufferBuilder, v3.x,v3.y,v2.x,v2.y,v4.x,v4.y,r,g,b,a);
+            } else if (dist2>dist1&&dist2>dist4) {
+                drawTriangle(matrix4f, bufferBuilder, v3.x,v3.y,v1.x,v1.y,v4.x,v4.y,r,g,b,a);
+            } else {
+                drawTriangle(matrix4f, bufferBuilder, v3.x,v3.y,v1.x,v1.y,v2.x,v2.y,r,g,b,a);
+            }
+        } else {
+            drawTriangle(matrix4f, bufferBuilder, v1.x,v1.y,v2.x,v2.y,v3.x,v3.y,r,g,b,a);
+            dist1 = v4.min(v1).getSqMagnitude();
+            dist2 = v4.min(v2).getSqMagnitude();
+            dist3 = v4.min(v3).getSqMagnitude();
+            if(dist1>dist2&&dist1>dist3){
+                drawTriangle(matrix4f, bufferBuilder, v4.x,v4.y,v2.x,v2.y,v3.x,v3.y,r,g,b,a);
+            } else if (dist2>dist1&&dist2>dist3) {
+                drawTriangle(matrix4f, bufferBuilder, v4.x,v4.y,v1.x,v1.y,v3.x,v3.y,r,g,b,a);
+            } else {
+                drawTriangle(matrix4f, bufferBuilder, v4.x,v4.y,v1.x,v1.y,v2.x,v2.y,r,g,b,a);
+            }
+        }
+         */
     }
+
     private class FloatVertex{
         public float x;
         public float y;
@@ -162,6 +206,9 @@ public class ElectricityMeterScreen extends HandledScreen<ElectricityMeterScreen
         }
         public FloatVertex min(FloatVertex floatVertex){
             return new FloatVertex(x-floatVertex.x,y- floatVertex.y,z- floatVertex.z);
+        }
+        public float getSqMagnitude(){
+            return x*x+y*y;
         }
         public float getDirection(){
             return y/x;
