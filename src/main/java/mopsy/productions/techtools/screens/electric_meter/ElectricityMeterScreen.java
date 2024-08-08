@@ -10,13 +10,12 @@ import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.math.Matrix4f;
 
-import java.util.Arrays;
+import java.awt.geom.Line2D;
 
 import static mopsy.productions.techtools.TechTools.modid;
 
 public class ElectricityMeterScreen extends HandledScreen<ElectricityMeterScreenHandler> {
     private static final Identifier TEXTURE = new Identifier(modid, "textures/gui/electricity_meter.png");
-    private long firstTime=System.nanoTime();
 
     public ElectricityMeterScreen(ElectricityMeterScreenHandler handler, PlayerInventory inventory, Text title) {
         super(handler, inventory, title);
@@ -41,34 +40,81 @@ public class ElectricityMeterScreen extends HandledScreen<ElectricityMeterScreen
         //Render UI
         if (client == null || client.world == null) return;
         if (client.world.getBlockEntity(handler.blockPos) instanceof ElectricityMeterEntity entity) {
-            drawCenteredText(matrices, textRenderer, Arrays.toString(entity.clientSortedValues), width / 2, height / 2, 0xFFFFFFFF);
+            entity.extraXOffset = Math.max(0, entity.extraXOffset-(System.nanoTime()-entity.clientLastUpdateTime)/200000000f);
+            float[] pXArray = new float[entity.clientSortedValues.length];
+            float[] pYArray = new float[entity.clientSortedValues.length];
+            //drawCenteredText(matrices, textRenderer, Arrays.toString(entity.clientSortedValues), width / 2, height / 2, 0xFFFFFFFF);
+            int width = 125;
+            int height = 85;
+            float distanceBetweenDots = (float) width / (entity.clientSortedValues.length-1);
+            for (int i = 0; i < entity.clientSortedValues.length; i++) {
+                if(entity.clientMaxValue!=0) {
+                    pYArray[i] = y + 106 - ((float) height / entity.clientMaxValue) * entity.clientSortedValues[i];
+                }else{
+                    pYArray[i] = y + 106 - (float) height / 2;
+                }
+                pXArray[i] = x+20+distanceBetweenDots*i+entity.extraXOffset;
+                drawDot(matrices, pXArray[i],pYArray[i]);
+                if(i!=0)
+                    drawLine(matrices,pXArray[i-1],pYArray[i-1],pXArray[i],pYArray[i],1);
+            }
         }
 
+        //drawLine(matrices,x+150,y+150,x+150+(int)(Math.sin((firstTime-System.nanoTime())/10000000000f)*100),y+150+(int)(Math.cos((firstTime-System.nanoTime())/10000000000f)*100),1);
+
+        //drawDot(matrices,x+30,y+30);
+    }
+    private void drawDot(MatrixStack matrices, float x1, float y1){
         Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+        RenderSystem.setShader(GameRenderer::getPositionShader);
+        BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
+        bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION);
+        drawDot(matrix4f,bufferBuilder,x1,y1);
+        BufferRenderer.drawWithShader(bufferBuilder.end());
+    }
+    private void drawDot(Matrix4f matrix4f, BufferBuilder bufferBuilder, float x1, float y1){
+        bufferBuilder.vertex(matrix4f,x1-1.3f,y1+1.3f,0).next();
+        bufferBuilder.vertex(matrix4f,x1+1.3f,y1+1.3f,0).next();
+        bufferBuilder.vertex(matrix4f,x1+1.3f,y1-1.3f,0).next();
+        bufferBuilder.vertex(matrix4f,x1-1.3f,y1-1.3f,0).next();
+    }
+    private void drawLine(MatrixStack matrices, float x1, float y1, float x2, float y2, int thickness){
+        Matrix4f matrix4f = matrices.peek().getPositionMatrix();
+
         RenderSystem.enableBlend();
         RenderSystem.disableTexture();
         RenderSystem.defaultBlendFunc();
-        RenderSystem.setShader(GameRenderer::getPositionColorShader);
+        RenderSystem.setShader(GameRenderer::getPositionShader);
         BufferBuilder bufferBuilder = Tessellator.getInstance().getBuffer();
+        if(thickness == 0){
+            bufferBuilder.begin(VertexFormat.DrawMode.DEBUG_LINES, VertexFormats.POSITION);
+            bufferBuilder.vertex(matrix4f, x1,y1,0).next();
+            bufferBuilder.vertex(matrix4f, x2,y2,0).next();
+            BufferRenderer.drawWithShader(bufferBuilder.end());
+            return;
+        }
+
         bufferBuilder.begin(VertexFormat.DrawMode.QUADS, VertexFormats.POSITION_COLOR);
 
-        drawQuad(matrix4f,bufferBuilder,x+120+(firstTime-System.nanoTime())/300000000f,y+96+(firstTime-System.nanoTime())/300000000f,x+20,y+58,x+56,y+83,x+39,y+24,0.5f,0.3f,0.7f,1f);
-        //drawLine(matrix4f,bufferBuilder,x,y,x+100,y,12);
-        //drawLine(matrix4f,bufferBuilder,x+300,y,x+300,y+100,12);
-        //drawLine(matrix4f,bufferBuilder,x+300,y+100,x+300,y,12);
+        float oneSideThickness = thickness/2f;
+        float invSlope = -(x2-x1) / (y2-y1);
+
+        float dX = (float) (Math.cos(Math.atan(invSlope))*oneSideThickness);
+        float dY = (float) (Math.sin(Math.atan(invSlope))*oneSideThickness);
+
+        drawQuad(matrix4f,bufferBuilder,x1+dX,y1+dY,x2+dX,y2+dY,x1-dX,y1-dY,x2-dX,y2-dY,1,1,1,1);
+
         BufferRenderer.drawWithShader(bufferBuilder.end());
     }
-    private void drawLine(Matrix4f matrix4f, BufferBuilder bufferBuilder, int x1, int y1, int x2, int y2, int thickness){
+    private void drawLine(Matrix4f matrix4f, BufferBuilder bufferBuilder, float x1, float y1, float x2, float y2, int thickness){
+        float oneSideThickness = thickness/2f;
+        float invSlope = -(x2-x1) / (y2-y1);
 
-    }
-    /*private void drawQuad(Matrix4f matrix4f, BufferBuilder bufferBuilder, int x1, int y1, int x2, int y2, int x3, int y3, int x4, int y4, float r, float g, float b, float a){
-        bufferBuilder.vertex(matrix4f,x4,y4,0).color(r,g,b,a).next();
-        bufferBuilder.vertex(matrix4f,x3,y3,0).color(r,g,b,a).next();
-        bufferBuilder.vertex(matrix4f,x2,y2,0).color(r,g,b,a).next();
-        bufferBuilder.vertex(matrix4f,x1,y1,0).color(r,g,b,a).next();
-    }
+        float dX = (float) (Math.cos(Math.atan(invSlope))*oneSideThickness);
+        float dY = (float) (Math.sin(Math.atan(invSlope))*oneSideThickness);
 
-     */
+        drawQuad(matrix4f,bufferBuilder,x1+dX,y1+dY,x2+dX,y2+dY,x1-dX,y1-dY,x2-dX,y2-dY,1,1,1,1);
+    }
     private void drawTriangle(Matrix4f matrix4f, BufferBuilder bufferBuilder, float x1, float y1, float x2, float y2, float x3, float y3, float r, float g, float b, float a){
         float x1s,y1s,x2s,y2s,x3s,y3s;//sorted coordinates
         if(x1<=x2 && x1<=x3){
@@ -121,97 +167,13 @@ public class ElectricityMeterScreen extends HandledScreen<ElectricityMeterScreen
         bufferBuilder.vertex(matrix4f,x3s,y3s,0).color(r,g,b,a).next();
     }
     private void drawQuad(Matrix4f matrix4f, BufferBuilder bufferBuilder, float x1, float y1, float x2, float y2, float x3, float y3, float x4, float y4, float r, float g, float b, float a){
-        drawQuad(matrix4f,bufferBuilder,new FloatVertex(x1,y1),new FloatVertex(x2,y2),new FloatVertex(x3,y3),new FloatVertex(x4,y4),r,g,b,a);
-    }
-    private void drawQuad(Matrix4f matrix4f, BufferBuilder bufferBuilder, FloatVertex v1, FloatVertex v2, FloatVertex v3, FloatVertex v4, float r, float g, float b, float a){
-        /*List<FloatVertex> vertices = new ArrayList<>(4);
-        vertices.add(v1);
-        vertices.add(v2);
-        vertices.add(v3);
-        vertices.add(v4);
-
-        vertices.sort(Comparator.comparingDouble((vertex -> vertex.x)));
-        FloatVertex vertex1 = vertices.get(0);
-        FloatVertex vertex2 = vertices.get(1);
-        FloatVertex vertex3 = vertices.get(2);
-        FloatVertex vertex4 = vertices.get(3);
-
-        System.out.println();
-        System.out.println();
-        System.out.println();
-        System.out.println(vertex1.x+" "+vertex1.y);
-        System.out.println(vertex2.x+" "+vertex2.y);
-        System.out.println(vertex3.x+" "+vertex3.y);
-        System.out.println(vertex4.x+" "+vertex4.y);
-         */
-        /*
-        float dist1;
-        float dist2 = v1.min(v2).getSqMagnitude();
-        float dist3 = v1.min(v3).getSqMagnitude();
-        float dist4 = v1.min(v4).getSqMagnitude();
-
-        if(dist2>dist3&&dist2>dist4){
-            drawTriangle(matrix4f, bufferBuilder, v1.x,v1.y,v3.x,v3.y,v4.x,v4.y,r,g,b,a);
-            dist1 = v2.min(v1).getSqMagnitude();
-            dist3 = v2.min(v3).getSqMagnitude();
-            dist4 = v2.min(v4).getSqMagnitude();
-            if(dist1>dist3&&dist1>dist4){
-                drawTriangle(matrix4f, bufferBuilder, v2.x,v2.y,v3.x,v3.y,v4.x,v4.y,r,g,b,a);
-            } else if (dist3>dist1&&dist3>dist4) {
-                drawTriangle(matrix4f, bufferBuilder, v2.x,v2.y,v1.x,v1.y,v4.x,v4.y,r,g,b,a);
-            } else {
-                drawTriangle(matrix4f, bufferBuilder, v2.x,v2.y,v1.x,v1.y,v3.x,v3.y,r,g,b,a);
-            }
-        } else if (dist3>dist2&&dist3>dist4) {
-            drawTriangle(matrix4f, bufferBuilder, v1.x,v1.y,v2.x,v2.y,v4.x,v4.y,r,g,b,a);
-            dist1 = v3.min(v1).getSqMagnitude();
-            dist2 = v3.min(v2).getSqMagnitude();
-            dist4 = v3.min(v4).getSqMagnitude();
-            if(dist1>dist2&&dist1>dist4){
-                drawTriangle(matrix4f, bufferBuilder, v3.x,v3.y,v2.x,v2.y,v4.x,v4.y,r,g,b,a);
-            } else if (dist2>dist1&&dist2>dist4) {
-                drawTriangle(matrix4f, bufferBuilder, v3.x,v3.y,v1.x,v1.y,v4.x,v4.y,r,g,b,a);
-            } else {
-                drawTriangle(matrix4f, bufferBuilder, v3.x,v3.y,v1.x,v1.y,v2.x,v2.y,r,g,b,a);
-            }
+        drawTriangle(matrix4f, bufferBuilder, x1,y1,x2,y2,x3,y3,r,g,b,a);
+        if(Line2D.linesIntersect(x4,y4,x1,y1,x2,y2,x3,y3)){
+            drawTriangle(matrix4f,bufferBuilder,x4,y4,x2,y2,x3,y3,r,g,b,a);
+        } else if (Line2D.linesIntersect(x4,y4,x2,y2,x1,y1,x3,y3)) {
+            drawTriangle(matrix4f,bufferBuilder,x4,y4,x1,y1,x3,y3,r,g,b,a);
         } else {
-            drawTriangle(matrix4f, bufferBuilder, v1.x,v1.y,v2.x,v2.y,v3.x,v3.y,r,g,b,a);
-            dist1 = v4.min(v1).getSqMagnitude();
-            dist2 = v4.min(v2).getSqMagnitude();
-            dist3 = v4.min(v3).getSqMagnitude();
-            if(dist1>dist2&&dist1>dist3){
-                drawTriangle(matrix4f, bufferBuilder, v4.x,v4.y,v2.x,v2.y,v3.x,v3.y,r,g,b,a);
-            } else if (dist2>dist1&&dist2>dist3) {
-                drawTriangle(matrix4f, bufferBuilder, v4.x,v4.y,v1.x,v1.y,v3.x,v3.y,r,g,b,a);
-            } else {
-                drawTriangle(matrix4f, bufferBuilder, v4.x,v4.y,v1.x,v1.y,v2.x,v2.y,r,g,b,a);
-            }
-        }
-         */
-    }
-
-    private class FloatVertex{
-        public float x;
-        public float y;
-        public float z;
-        public FloatVertex(float x, float y, float z){
-            this.x=x;
-            this.y=y;
-            this.z=z;
-        }
-        public FloatVertex(float x, float y){
-            this.x=x;
-            this.y=y;
-            this.z=0.0f;
-        }
-        public FloatVertex min(FloatVertex floatVertex){
-            return new FloatVertex(x-floatVertex.x,y- floatVertex.y,z- floatVertex.z);
-        }
-        public float getSqMagnitude(){
-            return x*x+y*y;
-        }
-        public float getDirection(){
-            return y/x;
+            drawTriangle(matrix4f,bufferBuilder,x4,y4,x1,y1,x2,y2,r,g,b,a);
         }
     }
 

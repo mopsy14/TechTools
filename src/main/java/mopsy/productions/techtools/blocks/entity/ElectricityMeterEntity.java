@@ -33,6 +33,9 @@ public class ElectricityMeterEntity extends BlockEntity implements ExtendedScree
     public final long[] storedValues = new long[16];
     public int pointerToCurrentValue = 0;
     public final long[] clientSortedValues = new long[16];
+    public long clientMaxValue = 0;
+    public float extraXOffset = 0;
+    public long clientLastUpdateTime = System.nanoTime();
     public ElectricityMeterEntity(BlockPos pos, BlockState state) {
         super(TTBlockEntities.electricityMeter, pos, state);
     }
